@@ -111,200 +111,6 @@ let modalCustomImg = null;
 let currentModalUploadStatus = null; // 'verifying', 'verified', 'rejected'
 let currentModalVerificationResult = null;
 let currentModalRejectionMsg = null;
-let virtualExplorerSelectionId = null;
-
-const VIRTUAL_EXPLORER_ITEMS = [
-    {
-        id: 'local-fundus-1',
-        title: 'Local Real Fundus',
-        meta: 'Root asset bundled with PRO R',
-        badge: 'LOCAL',
-        path: 'sample_real_fundus.png',
-        fileName: 'sample_real_fundus.png'
-    },
-    {
-        id: 'local-fundus-2',
-        title: 'Isolated Retina Capture',
-        meta: 'Root asset bundled with PRO R',
-        badge: 'LOCAL',
-        path: 'user_retina_isolated.png',
-        fileName: 'user_retina_isolated.png'
-    },
-    {
-        id: 'pkg-grade-0',
-        title: 'Normal Retina Grade 0',
-        meta: 'Package sample-images set',
-        badge: 'PACKAGE',
-        path: '../../virtual_file_explorer_package/sample-images/01_normal_retina_grade0.png',
-        fileName: '01_normal_retina_grade0.png'
-    },
-    {
-        id: 'pkg-grade-1',
-        title: 'Mild NPDR Grade 1',
-        meta: 'Package sample-images set',
-        badge: 'PACKAGE',
-        path: '../../virtual_file_explorer_package/sample-images/02_mild_npdr_grade1.png',
-        fileName: '02_mild_npdr_grade1.png'
-    },
-    {
-        id: 'pkg-grade-2',
-        title: 'Moderate NPDR Grade 2',
-        meta: 'Package sample-images set',
-        badge: 'PACKAGE',
-        path: '../../virtual_file_explorer_package/sample-images/03_moderate_npdr_grade2.png',
-        fileName: '03_moderate_npdr_grade2.png'
-    },
-    {
-        id: 'pkg-grade-3',
-        title: 'Severe NPDR Grade 3',
-        meta: 'Package sample-images set',
-        badge: 'PACKAGE',
-        path: '../../virtual_file_explorer_package/sample-images/04_severe_npdr_grade3.png',
-        fileName: '04_severe_npdr_grade3.png'
-    },
-    {
-        id: 'pkg-grade-4',
-        title: 'Proliferative DR Grade 4',
-        meta: 'Package sample-images set',
-        badge: 'PACKAGE',
-        path: '../../virtual_file_explorer_package/sample-images/05_proliferative_dr_grade4.png',
-        fileName: '05_proliferative_dr_grade4.png'
-    },
-    {
-        id: 'pkg-portrait',
-        title: 'Portrait Quality Rejection',
-        meta: 'Package sample-images set',
-        badge: 'REJECT',
-        path: '../../virtual_file_explorer_package/sample-images/06_quality_rejection_portrait.png',
-        fileName: '06_quality_rejection_portrait.png'
-    },
-    {
-        id: 'pkg-diagram',
-        title: 'Diagram Quality Rejection',
-        meta: 'Package sample-images set',
-        badge: 'REJECT',
-        path: '../../virtual_file_explorer_package/sample-images/07_quality_rejection_diagram.png',
-        fileName: '07_quality_rejection_diagram.png'
-    }
-];
-
-function isPatientInputModalOpen() {
-    const modal = document.getElementById('patientInputModal');
-    if (!modal) return false;
-    return modal.classList.contains('open') || modal.style.display === 'flex';
-}
-
-function updateExplorerPreview(item) {
-    const previewImg = document.getElementById('virtualExplorerPreviewImg');
-    const previewName = document.getElementById('virtualExplorerPreviewName');
-    const previewMeta = document.getElementById('virtualExplorerPreviewMeta');
-    const previewPath = document.getElementById('virtualExplorerPath');
-    if (previewImg) previewImg.src = item ? item.path : '';
-    if (previewName) previewName.innerText = item ? item.title : 'No image selected';
-    if (previewMeta) previewMeta.innerText = item ? `${item.meta} | ${item.fileName}` : 'Choose a fundus sample to run the same verification pipeline used by the upload flow.';
-    if (previewPath) previewPath.innerText = item ? item.path : '/sample-images/ and local retinal samples';
-}
-
-function renderVirtualFileExplorer() {
-    const grid = document.getElementById('virtualExplorerGrid');
-    if (!grid) return;
-
-    grid.innerHTML = '';
-    const selected = VIRTUAL_EXPLORER_ITEMS.find(item => item.id === virtualExplorerSelectionId) || VIRTUAL_EXPLORER_ITEMS[0];
-    if (!virtualExplorerSelectionId && selected) virtualExplorerSelectionId = selected.id;
-
-    VIRTUAL_EXPLORER_ITEMS.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'file-explorer-card' + (selected && item.id === selected.id ? ' selected' : '');
-        card.onclick = () => {
-            virtualExplorerSelectionId = item.id;
-            renderVirtualFileExplorer();
-            updateExplorerPreview(item);
-            useVirtualExplorerSelection();
-        };
-
-        card.innerHTML = `
-            <div class="file-thumb">
-                <img src="${item.path}" alt="${item.title}" onerror="this.style.display='none'; this.parentElement.style.background='#111827'; this.parentElement.innerHTML='<div style=&quot;color:#94a3b8;font-size:11px;font-weight:700;padding:12px;text-align:center;&quot;>Preview unavailable</div><span class=\"file-badge\">${item.badge}</span>'">
-                <span class="file-badge">${item.badge}</span>
-            </div>
-            <div class="file-name">${item.title}</div>
-            <div class="file-meta">${item.meta}</div>
-            <div style="font-family:'JetBrains Mono', monospace; font-size:9.5px; color:#38bdf8; word-break:break-all;">${item.fileName}</div>
-        `;
-        grid.appendChild(card);
-    });
-
-    updateExplorerPreview(selected || null);
-}
-
-function openVirtualFileExplorer() {
-    const modal = document.getElementById('virtualFileExplorerModal');
-    if (!modal) return;
-
-    if (!virtualExplorerSelectionId) {
-        virtualExplorerSelectionId = VIRTUAL_EXPLORER_ITEMS[0]?.id || null;
-    }
-
-    renderVirtualFileExplorer();
-    modal.style.display = 'flex';
-    modal.classList.add('open');
-    logAudit('Virtual fundus explorer opened.');
-}
-
-function closeVirtualFileExplorer(event) {
-    if (event && event.target !== document.getElementById('virtualFileExplorerModal') && !event.target.classList.contains('btn-act')) return;
-    const modal = document.getElementById('virtualFileExplorerModal');
-    if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('open');
-    }
-}
-
-function triggerExplorerDeviceUpload() {
-    const explorer = document.getElementById('virtualFileExplorerModal');
-    if (explorer) {
-        explorer.style.display = 'none';
-        explorer.classList.remove('open');
-    }
-    const input = isPatientInputModalOpen() ? document.getElementById('inpCustomFile') : document.getElementById('fileInput');
-    if (input) input.click();
-}
-
-function ingestLoadedRetinaImage(img, fileName, base64Data) {
-    customUploadedImg = img;
-    if (isPatientInputModalOpen()) {
-        modalCustomImg = img;
-        const preset = document.getElementById('inpPreset');
-        if (preset) preset.value = 'CUSTOM';
-    }
-    processRealEyeVerificationAndAnalysis(img, fileName, base64Data);
-}
-
-function loadRetinaImageFromSource(source, fileName) {
-    const img = new Image();
-    img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        const base64Data = canvas.toDataURL('image/png');
-        ingestLoadedRetinaImage(img, fileName, base64Data);
-    };
-    img.onerror = function() {
-        alert(`Unable to load ${fileName}. If this sample is outside the app root, use the device upload fallback.`);
-    };
-    img.src = source;
-}
-
-function useVirtualExplorerSelection() {
-    const item = VIRTUAL_EXPLORER_ITEMS.find(entry => entry.id === virtualExplorerSelectionId) || VIRTUAL_EXPLORER_ITEMS[0];
-    if (!item) return;
-    closeVirtualFileExplorer();
-    logAudit(`Virtual explorer selected: <b>${item.fileName}</b>.`);
-    loadRetinaImageFromSource(item.path, item.fileName);
-}
 
 function logAudit(msg) {
     const logBox = document.getElementById('auditLog');
@@ -1700,7 +1506,7 @@ function updateRiskPreview() {
 
 function handlePresetSelect(val) {
     if (val === 'CUSTOM') {
-        openVirtualFileExplorer();
+        document.getElementById('inpCustomFile')?.click();
     }
 }
 
@@ -1761,7 +1567,7 @@ function submitPatientInputForm() {
 
     if (presetKey === 'CUSTOM') {
         if (!modalCustomImg && !customUploadedImg) {
-            alert("⚠️ Please choose an authentic retinal fundus image first using the virtual explorer or device upload fallback.");
+            alert("⚠️ Please choose an authentic retinal fundus image file first using 'Choose File'.");
             return;
         }
         if (currentModalUploadStatus === 'verifying') {
@@ -2114,7 +1920,7 @@ window.addEventListener('keydown', function(e) {
     const key = e.key;
 
     if (key === ' ' || key === 'u' || key === 'U') {
-        // Space or U: Trigger Fundus Upload
+        // Space or U: Trigger Virtual File Explorer
         e.preventDefault();
         openVirtualFileExplorer();
     } else if (key === 'g' || key === 'G') {
@@ -2129,6 +1935,10 @@ window.addEventListener('keydown', function(e) {
         // N or R: Register New Patient
         e.preventDefault();
         if (typeof openPatientInputModal === 'function') openPatientInputModal(false);
+    } else if (key === 'e' || key === 'E' || key === 'f' || key === 'F') {
+        // E or F: Open Virtual File Explorer (/sample-images/)
+        e.preventDefault();
+        if (typeof openVirtualFileExplorer === 'function') openVirtualFileExplorer();
     } else if (key === 'h' || key === 'H') {
         // H: Toggle Clinical High Contrast
         e.preventDefault();
@@ -2156,6 +1966,8 @@ window.addEventListener('keydown', function(e) {
         }
         const hot = document.getElementById('hotkeysModal');
         if (hot) hot.style.display = 'none';
+        const vExp = document.getElementById('virtualExplorerModal');
+        if (vExp) vExp.style.display = 'none';
     } else if (key === '1') {
         selectPatient('PAT_001_NORMAL');
     } else if (key === '2') {
@@ -2170,3 +1982,256 @@ window.addEventListener('keydown', function(e) {
         selectPatient('PAT_006_BLURRED');
     }
 });
+
+// ==========================================
+// VIRTUAL FILE EXPLORER ENGINE (/sample-images/)
+// ==========================================
+const VIRTUAL_SAMPLE_FILES = [
+    {
+        filename: '01_normal_retina_grade0.png',
+        path: 'sample-images/01_normal_retina_grade0.png',
+        title: 'Normal Healthy Retina',
+        category: 'normal',
+        gradeBadge: '🟢 Grade 0 — Normal',
+        badgeClass: 'v-badge-good',
+        size: '148 KB',
+        dims: '512 x 512 px',
+        desc: 'Healthy fundus photograph with clear optic disc, crisp macula, and normal vascular arcades. Zero referable DR risk.'
+    },
+    {
+        filename: '02_mild_npdr_grade1.png',
+        path: 'sample-images/02_mild_npdr_grade1.png',
+        title: 'Mild NPDR Fundus',
+        category: 'mild',
+        gradeBadge: '🟡 Grade 1 — Mild NPDR',
+        badgeClass: 'v-badge-warn',
+        size: '260 KB',
+        dims: '512 x 512 px',
+        desc: 'Early non-proliferative diabetic retinopathy demonstrating microaneurysms only. Annual dilated eye exam advice.'
+    },
+    {
+        filename: '03_moderate_npdr_grade2.png',
+        path: 'sample-images/03_moderate_npdr_grade2.png',
+        title: 'Moderate NPDR & CSME Risk',
+        category: 'moderate',
+        gradeBadge: '🟠 Grade 2 — Moderate NPDR',
+        badgeClass: 'v-badge-warn',
+        size: '331 KB',
+        dims: '512 x 512 px',
+        desc: 'Moderate NPDR with hard exudates circinate cluster within 500 microns of fovea indicating high risk of diabetic macular edema.'
+    },
+    {
+        filename: '04_severe_npdr_grade3.png',
+        path: 'sample-images/04_severe_npdr_grade3.png',
+        title: 'Severe NPDR 4-Quadrant',
+        category: 'severe',
+        gradeBadge: '🔴 Grade 3 — Severe NPDR',
+        badgeClass: 'v-badge-danger',
+        size: '148 KB',
+        dims: '512 x 512 px',
+        desc: 'Severe NPDR pattern fulfilling ETDRS 4-2-1 criteria with extensive intraretinal blot hemorrhages in all 4 quadrants.'
+    },
+    {
+        filename: '05_proliferative_dr_grade4.png',
+        path: 'sample-images/05_proliferative_dr_grade4.png',
+        title: 'Proliferative DR (High Risk)',
+        category: 'pdr',
+        gradeBadge: '🚨 Grade 4 — Proliferative DR',
+        badgeClass: 'v-badge-danger',
+        size: '331 KB',
+        dims: '512 x 512 px',
+        desc: 'Proliferative diabetic retinopathy featuring active neovascular fronds (NVD/NVE) with high vitreous hemorrhage risk.'
+    },
+    {
+        filename: '06_quality_rejection_portrait.png',
+        path: 'sample-images/06_quality_rejection_portrait.png',
+        title: 'Non-Retinal Face Portrait',
+        category: 'rejection',
+        gradeBadge: '❌ Non-Eye Image (Quality Gate)',
+        badgeClass: 'v-badge-reject',
+        size: '290 KB',
+        dims: '512 x 512 px',
+        desc: 'Non-retinal facial portrait used to test automated AI image verification, chromatic check, and non-eye rejection pipeline.'
+    },
+    {
+        filename: '07_quality_rejection_diagram.png',
+        path: 'sample-images/07_quality_rejection_diagram.png',
+        title: 'Non-Retinal Text Diagram',
+        category: 'rejection',
+        gradeBadge: '❌ Non-Eye Chart (Quality Gate)',
+        badgeClass: 'v-badge-reject',
+        size: '327 KB',
+        dims: '512 x 512 px',
+        desc: 'Textual chart and diagram used to test automated AI non-eye rejection and edge quality gating.'
+    }
+];
+
+let currentSelectedVirtualIndex = 0;
+let currentVirtualFilter = 'all';
+
+function openVirtualFileExplorer() {
+    const modal = document.getElementById('virtualExplorerModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    renderVirtualFileList();
+    selectVirtualFile(currentSelectedVirtualIndex);
+}
+
+function closeVirtualFileExplorer(e) {
+    if (e && e.target && e.target.id !== 'virtualExplorerModal' && !e.target.classList.contains('v-close-btn')) {
+        return;
+    }
+    const modal = document.getElementById('virtualExplorerModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function filterVirtualFiles(cat) {
+    currentVirtualFilter = cat;
+    document.querySelectorAll('.v-filter-tab').forEach(t => {
+        if (t.dataset.cat === cat) t.classList.add('active');
+        else t.classList.remove('active');
+    });
+    renderVirtualFileList();
+}
+
+function renderVirtualFileList() {
+    const grid = document.getElementById('virtualExplorerGrid');
+    const searchVal = (document.getElementById('inpVirtualSearch')?.value || '').toLowerCase().trim();
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    const filtered = VIRTUAL_SAMPLE_FILES.filter((item, idx) => {
+        item._origIndex = idx;
+        const matchesCat = (currentVirtualFilter === 'all') || (item.category === currentVirtualFilter);
+        const matchesSearch = !searchVal || item.title.toLowerCase().includes(searchVal) || item.filename.toLowerCase().includes(searchVal) || item.gradeBadge.toLowerCase().includes(searchVal);
+        return matchesCat && matchesSearch;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column: span 2; text-align:center; padding:30px; color:#64748b;">No matching image files found in /sample-images/</div>';
+        return;
+    }
+
+    filtered.forEach(item => {
+        const idx = item._origIndex;
+        const isSelected = (idx === currentSelectedVirtualIndex);
+        const card = document.createElement('div');
+        card.className = `v-file-card ${isSelected ? 'selected' : ''}`;
+        card.onclick = () => selectVirtualFile(idx);
+        card.ondblclick = () => loadVirtualFileByIndex(idx);
+
+        card.innerHTML = `
+            <div class="v-card-thumb">
+                <img src="${item.path}" alt="${item.title}" loading="lazy">
+                <span class="v-card-badge ${item.badgeClass}">${item.gradeBadge}</span>
+            </div>
+            <div class="v-card-body">
+                <div class="v-card-title">${item.title}</div>
+                <div class="v-card-filename">📁 /sample-images/${item.filename}</div>
+                <div class="v-card-meta"><span>${item.dims}</span> • <span>${item.size}</span></div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+
+    const countEl = document.getElementById('virtualFileCountText');
+    if (countEl) countEl.innerText = `${filtered.length} files in /sample-images/`;
+}
+
+function selectVirtualFile(idx) {
+    if (idx < 0 || idx >= VIRTUAL_SAMPLE_FILES.length) return;
+    currentSelectedVirtualIndex = idx;
+
+    document.querySelectorAll('.v-file-card').forEach((card, i) => {
+        card.classList.toggle('selected', i === idx);
+    });
+
+    const item = VIRTUAL_SAMPLE_FILES[idx];
+    const prevImg = document.getElementById('vPreviewImg');
+    const prevTitle = document.getElementById('vPreviewTitle');
+    const prevPath = document.getElementById('vPreviewPath');
+    const prevSize = document.getElementById('vPreviewSize');
+    const prevDims = document.getElementById('vPreviewDims');
+    const prevBadge = document.getElementById('vPreviewBadge');
+    const prevDesc = document.getElementById('vPreviewDesc');
+
+    if (prevImg) prevImg.src = item.path;
+    if (prevTitle) prevTitle.innerText = item.title;
+    if (prevPath) prevPath.innerText = `/sample-images/${item.filename}`;
+    if (prevSize) prevSize.innerText = item.size;
+    if (prevDims) prevDims.innerText = item.dims;
+    if (prevBadge) {
+        prevBadge.innerText = item.gradeBadge;
+        prevBadge.className = `v-badge ${item.badgeClass}`;
+    }
+    if (prevDesc) prevDesc.innerText = item.desc;
+}
+
+function loadSelectedVirtualFile() {
+    loadVirtualFileByIndex(currentSelectedVirtualIndex);
+}
+
+function loadVirtualFileByIndex(idx) {
+    const item = VIRTUAL_SAMPLE_FILES[idx];
+    if (!item) return;
+
+    if (typeof logAudit === 'function') {
+        logAudit(`Ingesting file from Virtual Explorer: <b>/sample-images/${item.filename}</b>...`);
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 512;
+        canvas.height = img.naturalHeight || 512;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const base64Data = canvas.toDataURL('image/png');
+
+        if (typeof modalCustomImg !== 'undefined') modalCustomImg = img;
+        if (typeof customUploadedImg !== 'undefined') customUploadedImg = img;
+
+        const inpPreset = document.getElementById('inpPreset');
+        if (inpPreset) inpPreset.value = 'CUSTOM';
+
+        const patModal = document.getElementById('patientInputModal');
+        if (patModal && patModal.style.display !== 'none') {
+            const riskTitle = document.getElementById('riskPreviewTitle');
+            const riskUrg = document.getElementById('riskPreviewUrgency');
+            if (riskTitle) {
+                riskTitle.style.color = '#38bdf8';
+                riskTitle.innerText = `⏳ ANALYZING & VERIFYING RETINAL FUNDUS (${item.filename})...`;
+            }
+            if (riskUrg) {
+                riskUrg.style.color = '#38bdf8';
+                riskUrg.innerText = 'AI Quality & Pathology Engine Running...';
+            }
+        }
+
+        if (typeof processRealEyeVerificationAndAnalysis === 'function') {
+            processRealEyeVerificationAndAnalysis(img, item.filename, base64Data);
+        }
+
+        const vModal = document.getElementById('virtualExplorerModal');
+        if (vModal) vModal.style.display = 'none';
+    };
+    img.onerror = function() {
+        if (typeof logAudit === 'function') {
+            logAudit(`❌ Failed to load image asset: /sample-images/${item.filename}`);
+        }
+        alert(`Could not load image file from /sample-images/${item.filename}`);
+    };
+    img.src = item.path;
+}
+
+// INTERCEPT ALL NATIVE FILE INPUT CLICKS AND DIRECT THEM TO VIRTUAL FILE EXPLORER
+document.addEventListener('click', function(e) {
+    if (e.target && (e.target.id === 'fileInput' || e.target.id === 'inpCustomFile')) {
+        e.preventDefault();
+        e.stopPropagation();
+        openVirtualFileExplorer();
+        return false;
+    }
+}, true);
