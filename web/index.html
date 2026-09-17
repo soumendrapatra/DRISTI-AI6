@@ -3298,10 +3298,9 @@ window.addEventListener('keydown', function(e) {
     const key = e.key;
 
     if (key === ' ' || key === 'u' || key === 'U') {
-        // Space or U: Trigger Fundus Upload
+        // Space or U: Trigger Virtual File Explorer
         e.preventDefault();
-        const fileInp = document.getElementById('fileInput');
-        if (fileInp) fileInp.click();
+        openVirtualFileExplorer();
     } else if (key === 'g' || key === 'G') {
         // G: Cycle Grad-CAM mode
         e.preventDefault();
@@ -3314,6 +3313,10 @@ window.addEventListener('keydown', function(e) {
         // N or R: Register New Patient
         e.preventDefault();
         if (typeof openPatientInputModal === 'function') openPatientInputModal(false);
+    } else if (key === 'e' || key === 'E' || key === 'f' || key === 'F') {
+        // E or F: Open Virtual File Explorer (/sample-images/)
+        e.preventDefault();
+        if (typeof openVirtualFileExplorer === 'function') openVirtualFileExplorer();
     } else if (key === 'h' || key === 'H') {
         // H: Toggle Clinical High Contrast
         e.preventDefault();
@@ -3341,6 +3344,8 @@ window.addEventListener('keydown', function(e) {
         }
         const hot = document.getElementById('hotkeysModal');
         if (hot) hot.style.display = 'none';
+        const vExp = document.getElementById('virtualExplorerModal');
+        if (vExp) vExp.style.display = 'none';
     } else if (key === '1') {
         selectPatient('PAT_001_NORMAL');
     } else if (key === '2') {
