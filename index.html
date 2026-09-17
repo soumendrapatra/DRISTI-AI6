@@ -543,6 +543,157 @@
             display: inline-block;
         }
 
+        /* VIRTUAL FILE EXPLORER MODAL STYLES */
+        .file-explorer-sheet {
+            background: #090e1a;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            width: 980px;
+            max-width: 96vw;
+            height: 700px;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 28px 60px -18px rgba(0, 0, 0, 0.9);
+        }
+        .file-explorer-header {
+            background: #0f172a;
+            border-bottom: 1px solid #1e293b;
+            padding: 12px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .file-explorer-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-explorer-toolbar {
+            background: #070a13;
+            border-bottom: 1px solid #1e293b;
+            padding: 10px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .file-explorer-path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #38bdf8;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 5px 10px;
+        }
+        .file-explorer-body {
+            display: grid;
+            grid-template-columns: 1fr 330px;
+            flex: 1;
+            min-height: 0;
+        }
+        .file-explorer-list {
+            padding: 14px;
+            overflow-y: auto;
+            background: #070a13;
+        }
+        .file-explorer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .file-explorer-card {
+            background: #0d1527;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 8px;
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .file-explorer-card:hover {
+            transform: translateY(-2px);
+            border-color: #06b6d4;
+            box-shadow: 0 10px 18px rgba(6, 182, 212, 0.18);
+        }
+        .file-explorer-card.selected {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3), 0 10px 22px rgba(6, 182, 212, 0.16);
+        }
+        .file-thumb {
+            width: 100%;
+            height: 126px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .file-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .file-badge {
+            position: absolute;
+            left: 6px;
+            bottom: 6px;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #fff;
+            background: rgba(2, 132, 199, 0.9);
+        }
+        .file-name {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: #f8fafc;
+        }
+        .file-meta {
+            font-size: 10px;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+        .file-explorer-preview {
+            border-left: 1px solid #1e293b;
+            background: #0d1527;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+        .file-preview-box {
+            width: 100%;
+            height: 186px;
+            background: #000;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .file-preview-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
     </style>
 </head>
 <body>
@@ -604,10 +755,10 @@
                     <span>Analyze Custom Retina</span>
                     <span style="font-size: 9.5px; color: #10b981;">Real-Time</span>
                 </div>
-                <div class="dropzone" id="fileDropzone" onclick="document.getElementById('fileInput').click()">
+                <div class="dropzone" id="fileDropzone" onclick="openVirtualFileExplorer()">
                     <span style="font-size: 20px;">📤</span>
-                    <div style="font-size: 11.5px; font-weight:700; color:#cbd5e1; margin-top:4px;">Drop Any Fundus Image</div>
-                    <div style="font-size: 9.5px; color:#64748b;">or click to browse local files (JPG/PNG)</div>
+                    <div style="font-size: 11.5px; font-weight:700; color:#cbd5e1; margin-top:4px;">Open Virtual Fundus Explorer</div>
+                    <div style="font-size: 9.5px; color:#64748b;">or drop a local JPG/PNG here</div>
                     <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
                 </div>
             </div>
@@ -1097,14 +1248,14 @@
             </div>
             <div class="form-grid-2">
                 <div class="form-group">
-                    <label>Select Retinal Presentation / Preset</label>
-                    <select id="inpPreset" class="form-control" onchange="handlePresetSelect(this.value)">
+                    <button type="button" class="form-control" style="background:#0284c7; color:white; font-weight:700; cursor:pointer; text-align:center; height:38px; display:flex; align-items:center; justify-content:center; gap:6px;" onclick="openVirtualFileExplorer()">
+                        📁 Browse Virtual Fundus Explorer
                         <option value="PAT_003_MODERATE" selected>Preset: Moderate NPDR with Hard Exudates (CSME Risk)</option>
                         <option value="PAT_001_NORMAL">Preset: Normal Healthy Retina (Routine Screen)</option>
                         <option value="PAT_002_MILD">Preset: Mild NPDR (Isolated Microaneurysms)</option>
                         <option value="PAT_004_SEVERE">Preset: Severe NPDR (Extensive 4-Quadrant Hemorrhages)</option>
                         <option value="PAT_005_PDR">Preset: Proliferative DR (Active Neovascularization)</option>
-                        <option value="PAT_006_BLURRED">Preset: Defective Quality (Motion Blur & Glare Flash)</option>
+                        📂 Open Virtual File Explorer (Browse retinal samples or device upload)
                         <option value="CUSTOM">Upload My Own Local Fundus File (JPG/PNG)</option>
                     </select>
                 </div>
@@ -1200,6 +1351,43 @@
             <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
                 <button class="btn-act" style="background:#475569; color:white;" onclick="closeReportModal()">Close</button>
                 <button class="btn-act" style="background:#0284c7; color:white;" onclick="window.print()">🖨️ Print / Save PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIRTUAL FILE EXPLORER MODAL -->
+    <div class="modal" id="virtualFileExplorerModal" onclick="closeVirtualFileExplorer(event)" style="z-index:1100;">
+        <div class="file-explorer-sheet" onclick="event.stopPropagation()">
+            <div class="file-explorer-header">
+                <div>
+                    <div class="file-explorer-title">📁 Virtual Fundus Explorer</div>
+                    <div style="font-size:11px; color:#94a3b8; margin-top:3px;">Pick a sample image or use the device-upload fallback</div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+                    <button class="btn-act" style="background:#334155; color:white; padding:6px 10px; font-size:10.5px;" onclick="triggerExplorerDeviceUpload()">Upload From Device</button>
+                    <button class="btn-act" style="background:#334155; color:white; padding:6px 10px; font-size:10.5px;" onclick="closeVirtualFileExplorer()">✕</button>
+                </div>
+            </div>
+            <div class="file-explorer-toolbar">
+                <div class="file-explorer-path" id="virtualExplorerPath">/sample-images/ and local retinal samples</div>
+                <div style="font-size:11px; color:#64748b;">Click a card to analyze it immediately</div>
+            </div>
+            <div class="file-explorer-body">
+                <div class="file-explorer-list">
+                    <div class="file-explorer-grid" id="virtualExplorerGrid"></div>
+                </div>
+                <div class="file-explorer-preview">
+                    <div style="font-size:10.5px; text-transform:uppercase; color:#64748b; font-weight:800; letter-spacing:0.4px;">Selection Preview</div>
+                    <div class="file-preview-box"><img id="virtualExplorerPreviewImg" alt="Selected fundus preview"></div>
+                    <div>
+                        <div class="file-name" id="virtualExplorerPreviewName">No image selected</div>
+                        <div class="file-meta" id="virtualExplorerPreviewMeta">Choose a fundus sample to run the same verification pipeline used by the upload flow.</div>
+                    </div>
+                    <div style="display:grid; gap:8px;">
+                        <button class="btn-act" style="background:linear-gradient(135deg, #0284c7, #06b6d4); color:white; font-weight:800; justify-content:center;" onclick="useVirtualExplorerSelection()">Analyze Selected Image</button>
+                        <button class="btn-act" style="background:#1e293b; color:#cbd5e1; justify-content:center;" onclick="triggerExplorerDeviceUpload()">Use Device File Instead</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

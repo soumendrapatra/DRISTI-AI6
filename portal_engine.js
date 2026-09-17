@@ -111,6 +111,200 @@ let modalCustomImg = null;
 let currentModalUploadStatus = null; // 'verifying', 'verified', 'rejected'
 let currentModalVerificationResult = null;
 let currentModalRejectionMsg = null;
+let virtualExplorerSelectionId = null;
+
+const VIRTUAL_EXPLORER_ITEMS = [
+    {
+        id: 'local-fundus-1',
+        title: 'Local Real Fundus',
+        meta: 'Root asset bundled with PRO R',
+        badge: 'LOCAL',
+        path: 'sample_real_fundus.png',
+        fileName: 'sample_real_fundus.png'
+    },
+    {
+        id: 'local-fundus-2',
+        title: 'Isolated Retina Capture',
+        meta: 'Root asset bundled with PRO R',
+        badge: 'LOCAL',
+        path: 'user_retina_isolated.png',
+        fileName: 'user_retina_isolated.png'
+    },
+    {
+        id: 'pkg-grade-0',
+        title: 'Normal Retina Grade 0',
+        meta: 'Package sample-images set',
+        badge: 'PACKAGE',
+        path: '../../virtual_file_explorer_package/sample-images/01_normal_retina_grade0.png',
+        fileName: '01_normal_retina_grade0.png'
+    },
+    {
+        id: 'pkg-grade-1',
+        title: 'Mild NPDR Grade 1',
+        meta: 'Package sample-images set',
+        badge: 'PACKAGE',
+        path: '../../virtual_file_explorer_package/sample-images/02_mild_npdr_grade1.png',
+        fileName: '02_mild_npdr_grade1.png'
+    },
+    {
+        id: 'pkg-grade-2',
+        title: 'Moderate NPDR Grade 2',
+        meta: 'Package sample-images set',
+        badge: 'PACKAGE',
+        path: '../../virtual_file_explorer_package/sample-images/03_moderate_npdr_grade2.png',
+        fileName: '03_moderate_npdr_grade2.png'
+    },
+    {
+        id: 'pkg-grade-3',
+        title: 'Severe NPDR Grade 3',
+        meta: 'Package sample-images set',
+        badge: 'PACKAGE',
+        path: '../../virtual_file_explorer_package/sample-images/04_severe_npdr_grade3.png',
+        fileName: '04_severe_npdr_grade3.png'
+    },
+    {
+        id: 'pkg-grade-4',
+        title: 'Proliferative DR Grade 4',
+        meta: 'Package sample-images set',
+        badge: 'PACKAGE',
+        path: '../../virtual_file_explorer_package/sample-images/05_proliferative_dr_grade4.png',
+        fileName: '05_proliferative_dr_grade4.png'
+    },
+    {
+        id: 'pkg-portrait',
+        title: 'Portrait Quality Rejection',
+        meta: 'Package sample-images set',
+        badge: 'REJECT',
+        path: '../../virtual_file_explorer_package/sample-images/06_quality_rejection_portrait.png',
+        fileName: '06_quality_rejection_portrait.png'
+    },
+    {
+        id: 'pkg-diagram',
+        title: 'Diagram Quality Rejection',
+        meta: 'Package sample-images set',
+        badge: 'REJECT',
+        path: '../../virtual_file_explorer_package/sample-images/07_quality_rejection_diagram.png',
+        fileName: '07_quality_rejection_diagram.png'
+    }
+];
+
+function isPatientInputModalOpen() {
+    const modal = document.getElementById('patientInputModal');
+    if (!modal) return false;
+    return modal.classList.contains('open') || modal.style.display === 'flex';
+}
+
+function updateExplorerPreview(item) {
+    const previewImg = document.getElementById('virtualExplorerPreviewImg');
+    const previewName = document.getElementById('virtualExplorerPreviewName');
+    const previewMeta = document.getElementById('virtualExplorerPreviewMeta');
+    const previewPath = document.getElementById('virtualExplorerPath');
+    if (previewImg) previewImg.src = item ? item.path : '';
+    if (previewName) previewName.innerText = item ? item.title : 'No image selected';
+    if (previewMeta) previewMeta.innerText = item ? `${item.meta} | ${item.fileName}` : 'Choose a fundus sample to run the same verification pipeline used by the upload flow.';
+    if (previewPath) previewPath.innerText = item ? item.path : '/sample-images/ and local retinal samples';
+}
+
+function renderVirtualFileExplorer() {
+    const grid = document.getElementById('virtualExplorerGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    const selected = VIRTUAL_EXPLORER_ITEMS.find(item => item.id === virtualExplorerSelectionId) || VIRTUAL_EXPLORER_ITEMS[0];
+    if (!virtualExplorerSelectionId && selected) virtualExplorerSelectionId = selected.id;
+
+    VIRTUAL_EXPLORER_ITEMS.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'file-explorer-card' + (selected && item.id === selected.id ? ' selected' : '');
+        card.onclick = () => {
+            virtualExplorerSelectionId = item.id;
+            renderVirtualFileExplorer();
+            updateExplorerPreview(item);
+            useVirtualExplorerSelection();
+        };
+
+        card.innerHTML = `
+            <div class="file-thumb">
+                <img src="${item.path}" alt="${item.title}" onerror="this.style.display='none'; this.parentElement.style.background='#111827'; this.parentElement.innerHTML='<div style=&quot;color:#94a3b8;font-size:11px;font-weight:700;padding:12px;text-align:center;&quot;>Preview unavailable</div><span class=\"file-badge\">${item.badge}</span>'">
+                <span class="file-badge">${item.badge}</span>
+            </div>
+            <div class="file-name">${item.title}</div>
+            <div class="file-meta">${item.meta}</div>
+            <div style="font-family:'JetBrains Mono', monospace; font-size:9.5px; color:#38bdf8; word-break:break-all;">${item.fileName}</div>
+        `;
+        grid.appendChild(card);
+    });
+
+    updateExplorerPreview(selected || null);
+}
+
+function openVirtualFileExplorer() {
+    const modal = document.getElementById('virtualFileExplorerModal');
+    if (!modal) return;
+
+    if (!virtualExplorerSelectionId) {
+        virtualExplorerSelectionId = VIRTUAL_EXPLORER_ITEMS[0]?.id || null;
+    }
+
+    renderVirtualFileExplorer();
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+    logAudit('Virtual fundus explorer opened.');
+}
+
+function closeVirtualFileExplorer(event) {
+    if (event && event.target !== document.getElementById('virtualFileExplorerModal') && !event.target.classList.contains('btn-act')) return;
+    const modal = document.getElementById('virtualFileExplorerModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('open');
+    }
+}
+
+function triggerExplorerDeviceUpload() {
+    const explorer = document.getElementById('virtualFileExplorerModal');
+    if (explorer) {
+        explorer.style.display = 'none';
+        explorer.classList.remove('open');
+    }
+    const input = isPatientInputModalOpen() ? document.getElementById('inpCustomFile') : document.getElementById('fileInput');
+    if (input) input.click();
+}
+
+function ingestLoadedRetinaImage(img, fileName, base64Data) {
+    customUploadedImg = img;
+    if (isPatientInputModalOpen()) {
+        modalCustomImg = img;
+        const preset = document.getElementById('inpPreset');
+        if (preset) preset.value = 'CUSTOM';
+    }
+    processRealEyeVerificationAndAnalysis(img, fileName, base64Data);
+}
+
+function loadRetinaImageFromSource(source, fileName) {
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const base64Data = canvas.toDataURL('image/png');
+        ingestLoadedRetinaImage(img, fileName, base64Data);
+    };
+    img.onerror = function() {
+        alert(`Unable to load ${fileName}. If this sample is outside the app root, use the device upload fallback.`);
+    };
+    img.src = source;
+}
+
+function useVirtualExplorerSelection() {
+    const item = VIRTUAL_EXPLORER_ITEMS.find(entry => entry.id === virtualExplorerSelectionId) || VIRTUAL_EXPLORER_ITEMS[0];
+    if (!item) return;
+    closeVirtualFileExplorer();
+    logAudit(`Virtual explorer selected: <b>${item.fileName}</b>.`);
+    loadRetinaImageFromSource(item.path, item.fileName);
+}
 
 function logAudit(msg) {
     const logBox = document.getElementById('auditLog');
@@ -1506,7 +1700,7 @@ function updateRiskPreview() {
 
 function handlePresetSelect(val) {
     if (val === 'CUSTOM') {
-        document.getElementById('inpCustomFile')?.click();
+        openVirtualFileExplorer();
     }
 }
 
@@ -1567,7 +1761,7 @@ function submitPatientInputForm() {
 
     if (presetKey === 'CUSTOM') {
         if (!modalCustomImg && !customUploadedImg) {
-            alert("⚠️ Please choose an authentic retinal fundus image file first using 'Choose File'.");
+            alert("⚠️ Please choose an authentic retinal fundus image first using the virtual explorer or device upload fallback.");
             return;
         }
         if (currentModalUploadStatus === 'verifying') {
@@ -1922,8 +2116,7 @@ window.addEventListener('keydown', function(e) {
     if (key === ' ' || key === 'u' || key === 'U') {
         // Space or U: Trigger Fundus Upload
         e.preventDefault();
-        const fileInp = document.getElementById('fileInput');
-        if (fileInp) fileInp.click();
+        openVirtualFileExplorer();
     } else if (key === 'g' || key === 'G') {
         // G: Cycle Grad-CAM mode
         e.preventDefault();
