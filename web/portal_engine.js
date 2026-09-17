@@ -1506,7 +1506,7 @@ function updateRiskPreview() {
 
 function handlePresetSelect(val) {
     if (val === 'CUSTOM') {
-        document.getElementById('inpCustomFile')?.click();
+        openVirtualFileExplorer();
     }
 }
 
